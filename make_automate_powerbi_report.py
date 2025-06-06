@@ -1,10 +1,12 @@
+import os
 import time
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
+from PIL import Image
+from io import BytesIO
 
 # Realiza un click en un botón basado en su aria label
 def click_location_button(driver, location_button):
@@ -25,7 +27,7 @@ def click_location_button(driver, location_button):
         # Ejecuta el click
         driver.execute_script("arguments[0].click();", button)
         print(f"[✓] Click realizado en: {location_button}")
-        time.sleep(5)
+        time.sleep(4)
 
     except Exception as e:
         print(f"[X] No se pudo hacer click en: {location_button}")
@@ -33,8 +35,6 @@ def click_location_button(driver, location_button):
 # Realiza un click en un botón basado en su aria label (para desclicar el boton previamente clickeado)
 def unclick_location_button(driver, location_button):
     try:
-        print(f"* {location_button} *")        
-
         # Espera que el DOM esté estable y el botón sea visible
         xpath = f"//*[@aria-label='{location_button}']"
         WebDriverWait(driver, 10).until(
@@ -49,14 +49,14 @@ def unclick_location_button(driver, location_button):
         # Ejecuta unclick
         driver.execute_script("arguments[0].click();", button)
         print(f"[✓] Unclick realizado en: {location_button}")
-        time.sleep(5)
+        time.sleep(4)
 
     except Exception as e:
         print(f"[X] No se pudo hacer unclick en: {location_button}")
 
 # Descarga las figuras de un reporte de Power BI
-def download_graphics(page_name, graphics, driver, locacion=""):
-    for id, graphic in graphics.items():
+def download_graphics(page_name, page_graphics, driver, page_report, locacion=""):
+    for id, graphic in page_graphics.items():
         print(f'[*] Buscando el gráfico: {graphic}')
         
         try:
@@ -83,17 +83,15 @@ def download_graphics(page_name, graphics, driver, locacion=""):
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", grafico)
             time.sleep(2)
 
-            # Zoom para mejorar resolución
-            driver.execute_script("document.body.style.zoom='200%'")
-            time.sleep(1)
-
             # Guardar la captura de pantalla
             save_file_as = f'{page_name}{str("-"+locacion) if locacion != "" else locacion}-{id}.png'
-            grafico.screenshot(f'mail_report/{save_file_as}')
-            print(f'✅ Imagen guardada: {save_file_as}')
 
-            # Restaurar zoom
-            driver.execute_script("document.body.style.zoom='100%'")
+            # Especificar la ruta de guardado
+            path = os.path.join('mail_report', save_file_as)
+
+            # Guardar captura de pantalla
+            grafico.screenshot(path)
+            print(f'✅ Imagen guardada: {save_file_as}')
 
         except Exception as e:
             print(f"❌ Error: no se pudo encontrar o capturar: {graphic}")
@@ -103,9 +101,9 @@ def graphics_capture_by_page(locaciones, options, page_report):
     page_name = page_report['page_name']
     page_url = page_report['page_url']
     filter_report_by = page_report['filter_report_by']
-    graphics = page_report['page_graphics']
+    page_graphics = page_report['page_graphics']
 
-    print('.-----------------------------------------------------------------------.')
+    print('\n.-----------------------------------------------------------------------.')
 
     try:
         driver = webdriver.Chrome(options=options)        
@@ -115,25 +113,25 @@ def graphics_capture_by_page(locaciones, options, page_report):
         print("[*] Esperando a que cargue la página")
 
         WebDriverWait(driver, 30) # 30 segundos para que se cargue la pagina
-        print("[*] Pagina cargada (10 seg de renderizado) ...")
-        time.sleep(10) # 10 segundos adicionales para renderizado de la pagina
+        print("[*] Pagina cargada (9 seg de renderizado) ...")
+        time.sleep(9) # 9 segundos adicionales para renderizado de la pagina
 
         if filter_report_by == 'locacion':
             print('\nBuscar por locacion ...\n')
             for locacion in locaciones:
                 click_location_button(driver, locacion)
-                download_graphics(page_name, graphics, driver, locacion)
+                download_graphics(page_name, page_graphics, driver, page_report, locacion)
                 unclick_location_button(driver, locacion)
                 print('')
         else:
             print('\nBuscar por mes ...\n')
-            download_graphics(page_name, graphics, driver)
+            download_graphics(page_name, page_graphics, driver, page_report)
             print('')
 
     finally:
         driver.quit()
 
-    print("'-----------------------------------------------------------------------'\n")
+    print("'-----------------------------------------------------------------------'")
 
 
 # Captura de graficos de Power Bi por pagina

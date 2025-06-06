@@ -114,13 +114,12 @@ def update_local_file(document, locaciones, root_address, test_address, vendedor
 
         # Combinar los datos (sin eliminar duplicados)
         df_updated = pl.concat([df_local, df_mail])
-
         # print(f'Updated: {df_mail.schema}')
         # print(df_updated.shape)
 
-        return df_updated
+        return df_updated, False
     
     else:
         print(f"⚠️ No hay datos nuevos en el archivo de correo '{mail_file_address}' para la hoja '{mail_sheet_name}'.")
 
-        return pl.from_pandas(df_local)
+        return pl.from_pandas(df_local), True
