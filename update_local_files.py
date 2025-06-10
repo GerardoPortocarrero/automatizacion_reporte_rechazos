@@ -46,7 +46,6 @@ def filter_mail_file_dates(document, df_mail, df_local):
 # Actualizar archivo si tiene columna 'Mesa Comercial'
 def customized_ruta_mail_file(df, vendedores):
     if 'Mesa Comercial' in df.columns:
-        print("🛠️ Procesando archivo con 'Mesa Comercial'")
 
         df = df.drop(columns=['Mesa Comercial'])
 
@@ -58,8 +57,6 @@ def customized_ruta_mail_file(df, vendedores):
             return None
 
         df['Nombre Vendedor'] = df.apply(get_nombre_vendedor, axis=1)
-    else:
-        print("📄 Archivo sin 'Mesa Comercial'. No se hace nada.")
 
     return df
 
@@ -69,6 +66,13 @@ def save_local_file_changes(df_updated, document):
     with open(document['local_file_address'], "w", encoding="utf-8-sig") as f:
         f.write(df_updated)
 
+# Leer datos del archivo local
+def read_local_file(local_file_address):
+    df_local = pd.read_csv(local_file_address, sep=';')
+    df_local = delete_unnamed_columns(df_local)
+
+    return df_local
+
 # Actualizar el archivo local con los datos del correo
 def update_local_file(document, locaciones, root_address, test_address, vendedores):
     # Rutas de archivo
@@ -77,8 +81,7 @@ def update_local_file(document, locaciones, root_address, test_address, vendedor
     local_file_address = os.path.join(root_address+test_address, document['local_file_name'])
 
     # Leer datos del archivo local
-    df_local = pd.read_csv(local_file_address, sep=';')
-    df_local = delete_unnamed_columns(df_local)
+    df_local = read_local_file(local_file_address)
 
     # Leer datos del archivo de correo
     df_mail = pd.read_excel(mail_file_address, sheet_name=mail_sheet_name, header=None)
@@ -95,11 +98,15 @@ def update_local_file(document, locaciones, root_address, test_address, vendedor
 
         # Asegurar los mismos tipos de datos (str, int, ...)
         df_mail.columns = df_local.columns
+        # Forzar columnas a tipo string si están completamente vacías para evitar el tipo Null
+        for col in df_mail.columns:
+            if df_mail[col].isnull().all():
+                df_mail[col] = df_mail[col].astype(str)
+        # Forzar copiar el tipado de local a las columnas del mail
         df_mail = df_mail.astype(df_local.dtypes.to_dict())
 
         # Convertir la fecha a string, incluso si los valores son datetime dentro de "object"
-        df_mail[document['date']] = df_mail[document['date']].apply(lambda x: x.strftime('%d/%m/%Y') if isinstance(x, pd.Timestamp) or isinstance(x, datetime) else str(x))
-        #print(document['date'].apply(type).value_counts())
+        df_mail[document['date']] = df_mail[document['date']].apply(lambda x: x.strftime('%d/%m/%Y') if isinstance(x, pd.Timestamp) or isinstance(x, datetime) else str(x))        
 
         # Convertir a Polars
         df_local = pl.from_pandas(df_local)
@@ -122,4 +129,7 @@ def update_local_file(document, locaciones, root_address, test_address, vendedor
     else:
         print(f"⚠️ No hay datos nuevos en el archivo de correo '{mail_file_address}' para la hoja '{mail_sheet_name}'.")
 
-        return pl.from_pandas(df_local), True
+        # Convertir a polars
+        df_local = pl.from_pandas(df_local)
+
+        return df_local, True
