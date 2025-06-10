@@ -85,6 +85,7 @@ def download_graphics(page_name, page_graphics, driver, page_report, locacion=""
 
             # Guardar la captura de pantalla
             save_file_as = f'{page_name}{str("-"+locacion) if locacion != "" else locacion}-{id}.png'
+            save_file_as = save_file_as.replace(" ", "_")
 
             # Especificar la ruta de guardado
             path = os.path.join('mail_report', save_file_as)
@@ -132,7 +133,6 @@ def graphics_capture_by_page(locaciones, options, page_report):
         driver.quit()
 
     print("'-----------------------------------------------------------------------'")
-
 
 # Captura de graficos de Power Bi por pagina
 def powerbi_graphics_capture(locaciones, PAGES_REPORT):
