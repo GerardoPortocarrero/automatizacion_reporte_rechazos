@@ -39,10 +39,10 @@ def embedir_imagenes_en_html(soup, mail, ruta_base_imagenes):
             img_tag["src"] = f"cid:{cid}"
 
 # Funcion para construir descripcion mensual del html
-def month_description(soup, month, total, months):
+def month_description(soup, month, total_rechazos, months):
     # <p>En el mes de <strong>JUNIO</strong> se reportó un total de <strong style="color: #cc0000;">2278.88 CF RECHAZADAS</strong>. Se muestra la meta por localidad en la última columna.</p>
     p1 = soup.new_tag("p")
-    p1.append(BeautifulSoup(f'En el mes de <strong>{months[int(month)].upper()}</strong> se reportó un total de <strong style="color: #cc0000;">{total} CF Rechazadas</strong>. Se muestra la meta por localidad en la última columna.', 'html.parser'))
+    p1.append(BeautifulSoup(f'En el mes de <strong>{months[int(month)].upper()}</strong> se reportó un total de <strong style="color: #cc0000;">{total_rechazos} CF Rechazadas</strong>. Se muestra la meta por localidad en la última columna.', 'html.parser'))
 
     return p1
 
@@ -71,7 +71,7 @@ def crear_bloque_sede_solo_para_html_normal(sede, soup):
     bloque.append(p1)
 
     p2 = soup.new_tag("p")
-    p2.append(BeautifulSoup(f'Total de <strong>{sede["total"]}</strong> CF RECH', 'html.parser'))
+    p2.append(BeautifulSoup(f'Total de <strong>{sede["total_rechazos"]}</strong> CF RECH', 'html.parser'))
     bloque.append(p2) 
 
     bloque.append(soup.new_tag("p", string="Detalle:"))
@@ -114,24 +114,28 @@ def crear_bloque_sede(sede, soup):
     bloque.append(div_imgs)
 
     p1 = soup.new_tag("p")
-    p1.append(BeautifulSoup(f'{sede["nombre"]} alcanzó un <strong style="color: #cc0000;">{sede["porcentaje_cf"]}</strong> de CF RECH.', 'html.parser'))
+    p1.append(BeautifulSoup(f'{sede["nombre"]} alcanzó un <strong style="color: #cc0000;">{sede["porcentaje"]}</strong> de CF RECH.', 'html.parser'))
     bloque.append(p1)
 
     p2 = soup.new_tag("p")
-    p2.append(BeautifulSoup(f'Total de <strong>{sede["total"]}</strong> CF RECH', 'html.parser'))
+    p2.append(BeautifulSoup(f'Venta Rechazada: <strong>{sede["total_rechazos"]} CF</strong>.', 'html.parser'))
     bloque.append(p2)
+
+    p3 = soup.new_tag("p")
+    p3.append(BeautifulSoup(f'Carga Total: <strong>{sede["total_carga"]} CF</strong>.', 'html.parser'))
+    bloque.append(p3)
 
     bloque.append(soup.new_tag("p", string="Detalle:"))
 
     div_detalle = soup.new_tag("div", style="text-align: center;")
-    img_detalle = soup.new_tag("img", src=f"cid:{sede['detalle']}", width="700", style="margin: 10px; border: 1px solid #ddd; border-radius: 6px;")
+    img_detalle = soup.new_tag("img", src=f"cid:{sede['detalle']}", width="715", style="margin: 10px; border: 1px solid #ddd; border-radius: 6px;")
     div_detalle.append(img_detalle)
     bloque.append(div_detalle)
 
     bloque.append(soup.new_tag("p", string="Evolución Rechazo – Día"))
 
     div_evo = soup.new_tag("div", style="text-align: center;")
-    img_evo = soup.new_tag("img", src=f"cid:{sede['evolucion']}", width="700", style="margin: 10px; border: 1px solid #ddd; border-radius: 6px;")
+    img_evo = soup.new_tag("img", src=f"cid:{sede['evolucion']}", width="715", style="margin: 10px; border: 1px solid #ddd; border-radius: 6px;")
     div_evo.append(img_evo)
     bloque.append(div_evo)
 
@@ -150,7 +154,8 @@ def build_sedes_lista(locaciones, calculations):
         sede = {
             "nombre": loc,
             "porcentaje": calculations[loc]['porcentaje_cf'], # porcentajes.get(loc, "0.00%"),
-            "total": f'{calculations[loc]['venta_perdida_cf']:.2f}', # totales.get(loc, "0.00 CF RECH."),
+            "total_rechazos": f'{calculations[loc]['venta_perdida_cf']:.2f}', # venta perdida cf por localidad
+            "total_carga": f'{calculations[loc]['carga_cf']:.2f}', # carga cf por localidad
             "imagenes": [f"RECHAZOS-{loc}-{i}.png" for i in range(1, 4)],
             "detalle": f"DETALLES-{loc}-1.png",
             "evolucion": f"RECHAZOS-{loc}-4.png"
@@ -161,7 +166,7 @@ def build_sedes_lista(locaciones, calculations):
     return sedes
 
 # Usar template para rellenar los bloques de sedes
-def insert_updated_information(sedes, month, year, total, months):
+def insert_updated_information(sedes, month, year, total_rechazos, months):
     # Leer el HTML desde archivo
     with open("mail_report/template.html", "r", encoding="utf-8") as f:
         html = f.read()
@@ -170,7 +175,7 @@ def insert_updated_information(sedes, month, year, total, months):
 
     # Insertar descripcion mensual
     contenedor = soup.find("div", id="month-description")
-    contenedor.append(month_description(soup, month, total, months))
+    contenedor.append(month_description(soup, month, total_rechazos, months))
 
     # Insertar los bloques por sede
     contenedor = soup.find("div", id="bloques-sedes")

@@ -71,7 +71,7 @@ def make_calculations_for_locations(root_address, test_address, locaciones, tran
             "locacion": locacion,
             "porcentaje_cf": f"{porcentaje_cf:.2f}%",
             "venta_perdida_cf": venta_perdida_cf,
-            "carga_total": carga_total
+            "carga_cf": carga_total
         }
     
     return calculations
