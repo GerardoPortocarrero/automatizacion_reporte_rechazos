@@ -179,3 +179,4 @@ cython_debug/
 .exe
 mail_report/*.png
 mail_report/index.html
+*.txt

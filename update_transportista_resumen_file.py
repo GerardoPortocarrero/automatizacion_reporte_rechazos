@@ -9,7 +9,7 @@ def get_meta(meta, loc, año, mes):
         return 0.0
     
 # Resumen de CF de archivo transportista
-def update_transportista_resumen_file(meta, df):
+def create_transportista_resumen_file(meta, df):
     # Asegurar tipos
     df = df.with_columns([
         pl.col("Fecha").str.strptime(pl.Date, "%d/%m/%Y", strict=False),

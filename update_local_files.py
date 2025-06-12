@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import polars as pl
 from datetime import datetime
+import log_management as log
 
 # Eliminar solamente columnas llamadas Unnamed
 def delete_unnamed_columns(df):    
@@ -75,7 +76,10 @@ def set_transportista_code_mail_file(df, document, transportistas_code):
     return df
 
 # Escribir al CSV sobrescribiendo el original
-def save_local_file_changes(df_updated, document):    
+def save_local_file_changes(df_updated, document):
+    text = f'[✓] Archivo ({document['local_file_name']}) guardado Correctamente'
+    log.write_log(text)
+    
     df_updated = df_updated.write_csv(separator=";")
     with open(document['local_file_address'], "w", encoding="utf-8-sig") as f:
         f.write(df_updated)

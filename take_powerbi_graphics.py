@@ -55,7 +55,7 @@ def unclick_location_button(driver, location_button):
         print(f"[X] No se pudo hacer unclick en: {location_button}")
 
 # Descarga las figuras de un reporte de Power BI
-def download_graphics(page_name, page_graphics, driver, locacion=""):
+def download_graphics(mail_report_folder_address, page_name, page_graphics, driver, locacion=""):
     for id, graphic in page_graphics.items():
         print(f'[*] Buscando el gráfico: {graphic}')
         
@@ -88,7 +88,7 @@ def download_graphics(page_name, page_graphics, driver, locacion=""):
             save_file_as = save_file_as.replace(" ", "_")
 
             # Especificar la ruta de guardado
-            path = os.path.join('mail_report', save_file_as)
+            path = os.path.join(mail_report_folder_address, save_file_as)
 
             # Guardar captura de pantalla
             grafico.screenshot(path)
@@ -98,7 +98,7 @@ def download_graphics(page_name, page_graphics, driver, locacion=""):
             print(f"❌ Error: no se pudo encontrar o capturar: {graphic}")
 
 # Genera un reporte de Power BI por página
-def graphics_capture_by_page(locaciones, options, page_report):
+def graphics_capture_by_page(locaciones, options, page_report, mail_report_folder_address):
     page_name = page_report['page_name']
     page_url = page_report['page_url']
     filter_report_by = page_report['filter_report_by']
@@ -121,12 +121,12 @@ def graphics_capture_by_page(locaciones, options, page_report):
             print('\nBuscar por locacion ...\n')
             for locacion in locaciones:
                 click_location_button(driver, locacion)
-                download_graphics(page_name, page_graphics, driver, locacion)
+                download_graphics(mail_report_folder_address, page_name, page_graphics, driver, locacion)
                 unclick_location_button(driver, locacion)
                 print('')
         else:
             print('\nBuscar por mes ...\n')
-            download_graphics(page_name, page_graphics, driver)
+            download_graphics(mail_report_folder_address, page_name, page_graphics, driver)
             print('')
 
     finally:
@@ -135,10 +135,10 @@ def graphics_capture_by_page(locaciones, options, page_report):
     print("'-----------------------------------------------------------------------'")
 
 # Captura de graficos de Power Bi por pagina
-def take_powerbi_graphics_main(locaciones, PAGES_REPORT):
+def take_powerbi_graphics_main(locaciones, PAGES_REPORT, mail_report_folder_address):
     options = Options()
     options.add_argument("--start-maximized")
     options.add_argument("--user-data-dir=C:\\Users\\AYACDA23\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 6")
 
     for page in PAGES_REPORT:
-        graphics_capture_by_page(locaciones, options, page)
+        graphics_capture_by_page(locaciones, options, page, mail_report_folder_address)
