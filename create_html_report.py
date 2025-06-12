@@ -38,6 +38,17 @@ def embedir_imagenes_en_html(soup, mail, ruta_base_imagenes):
             # Actualiza el src en el HTML
             img_tag["src"] = f"cid:{cid}"
 
+# Funcion para construir el mes y año del reporte
+def report_date(soup, month, year, months):
+    # <h2 style="color: #ff3c3c; font-size: 20px; margin: 5px 0 0 0; font-weight: normal;">JUNIO 2025</h2>
+    h2 = soup.new_tag(
+        "h2",
+        style="color: #ff3c3c; font-size: 20px; margin: 5px 0 0 0; font-weight: normal;"
+    )
+    h2.append(BeautifulSoup(f'{months[int(month)].upper()} {year}', 'html.parser'))
+
+    return h2
+
 # Funcion para construir descripcion mensual del html
 def month_description(soup, month, total_rechazos, months):
     # <p>En el mes de <strong>JUNIO</strong> se reportó un total de <strong style="color: #cc0000;">2278.88 CF RECHAZADAS</strong>. Se muestra la meta por localidad en la última columna.</p>
@@ -118,7 +129,7 @@ def crear_bloque_sede(sede, soup):
     bloque.append(p1)
 
     p2 = soup.new_tag("p")
-    p2.append(BeautifulSoup(f'Venta Rechazada: <strong>{sede["total_rechazos"]} CF</strong>.', 'html.parser'))
+    p2.append(BeautifulSoup(f'Venta Rechazada: <strong style="color: #cc0000;>{sede["total_rechazos"]} CF</strong>.', 'html.parser'))
     bloque.append(p2)
 
     p3 = soup.new_tag("p")
@@ -144,10 +155,7 @@ def crear_bloque_sede(sede, soup):
     return bloque
 
 # Funcion para construir los datos de cada bloque
-def build_sedes_lista(locaciones, calculations):
-    # Directorio donde están las imágenes
-    image_folder = "mail_report"
-
+def build_sedes_calculations(locaciones, calculations):
     sedes = []
 
     for loc in locaciones:
@@ -166,12 +174,16 @@ def build_sedes_lista(locaciones, calculations):
     return sedes
 
 # Usar template para rellenar los bloques de sedes
-def insert_updated_information(sedes, month, year, total_rechazos, months):
+def create_html_report_main(locaciones, calculations, month, year, total_rechazos, months):
     # Leer el HTML desde archivo
     with open("mail_report/template.html", "r", encoding="utf-8") as f:
         html = f.read()
 
     soup = BeautifulSoup(html, "html.parser")
+
+    # Insertar subtitulo
+    contenedor = soup.find("div", id="report-date")
+    contenedor.append(report_date(soup, month, year, months))
 
     # Insertar descripcion mensual
     contenedor = soup.find("div", id="month-description")
@@ -179,7 +191,7 @@ def insert_updated_information(sedes, month, year, total_rechazos, months):
 
     # Insertar los bloques por sede
     contenedor = soup.find("div", id="bloques-sedes")
-    for sede in sedes:
+    for sede in build_sedes_calculations(locaciones, calculations):
         contenedor.append(crear_bloque_sede(sede, soup))
 
     # Guardar el HTML actualizado

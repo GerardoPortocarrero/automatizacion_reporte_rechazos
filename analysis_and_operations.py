@@ -73,5 +73,9 @@ def make_calculations_for_locations(root_address, test_address, locaciones, tran
             "venta_perdida_cf": venta_perdida_cf,
             "carga_cf": carga_total
         }
+
+    total_rechazos = 0
+    for x, y in calculations.items():
+        total_rechazos = total_rechazos + y['venta_perdida_cf']
     
-    return calculations
+    return calculations, total_rechazos

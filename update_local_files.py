@@ -60,6 +60,20 @@ def customized_ruta_mail_file(df, vendedores):
 
     return df
 
+# Actualizar codigos de transportistas
+def set_transportista_code_mail_file(df, document, transportistas_code):
+    
+    def get_codigo_transportista(row):
+        sede = row.get('Locación')
+        transportista = row.get('Transportista')
+        if sede in transportistas_code and transportista in transportistas_code[sede]:
+            return transportistas_code[sede][transportista]
+        return None
+
+    df[document['transportista']] = df.apply(get_codigo_transportista, axis=1)
+
+    return df
+
 # Escribir al CSV sobrescribiendo el original
 def save_local_file_changes(df_updated, document):    
     df_updated = df_updated.write_csv(separator=";")
@@ -74,7 +88,7 @@ def read_local_file(local_file_address):
     return df_local
 
 # Actualizar el archivo local con los datos del correo
-def update_local_file(document, locaciones, root_address, test_address, vendedores):
+def update_local_file(document, locaciones, root_address, test_address, vendedores, transportistas_code):
     # Rutas de archivo
     mail_file_address = document['mail_file_address']
     mail_sheet_name = document['mail_sheet_name']
@@ -95,6 +109,9 @@ def update_local_file(document, locaciones, root_address, test_address, vendedor
     if len(df_mail) > 0:
         # Configuracion solo para el archivo de ruta
         df_mail = customized_ruta_mail_file(df_mail, vendedores)
+
+        # Actualizar el codigo de transportista para ambos archivos
+        df_mail = set_transportista_code_mail_file(df_mail, document, transportistas_code)
 
         # Asegurar los mismos tipos de datos (str, int, ...)
         df_mail.columns = df_local.columns

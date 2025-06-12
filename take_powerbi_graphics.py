@@ -22,7 +22,7 @@ def click_location_button(driver, location_button):
         # Busca el botón justo antes de hacer click
         button = driver.find_element(By.XPATH, xpath)
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
-        time.sleep(3)
+        time.sleep(2)
 
         # Ejecuta el click
         driver.execute_script("arguments[0].click();", button)
@@ -44,7 +44,7 @@ def unclick_location_button(driver, location_button):
         # Busca el botón justo antes de hacer unclick
         button = driver.find_element(By.XPATH, xpath)
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
-        time.sleep(3)
+        time.sleep(2)
 
         # Ejecuta unclick
         driver.execute_script("arguments[0].click();", button)
@@ -55,7 +55,7 @@ def unclick_location_button(driver, location_button):
         print(f"[X] No se pudo hacer unclick en: {location_button}")
 
 # Descarga las figuras de un reporte de Power BI
-def download_graphics(page_name, page_graphics, driver, page_report, locacion=""):
+def download_graphics(page_name, page_graphics, driver, locacion=""):
     for id, graphic in page_graphics.items():
         print(f'[*] Buscando el gráfico: {graphic}')
         
@@ -113,20 +113,20 @@ def graphics_capture_by_page(locaciones, options, page_report):
         driver.get(page_url)
         print("[*] Esperando a que cargue la página")
 
-        WebDriverWait(driver, 30) # 30 segundos para que se cargue la pagina
+        WebDriverWait(driver, 20) # 20 segundos para que se cargue la pagina
         print("[*] Pagina cargada (9 seg de renderizado) ...")
-        time.sleep(9) # 9 segundos adicionales para renderizado de la pagina
+        time.sleep(15) # 15 segundos adicionales para renderizado de la pagina
 
         if filter_report_by == 'locacion':
             print('\nBuscar por locacion ...\n')
             for locacion in locaciones:
                 click_location_button(driver, locacion)
-                download_graphics(page_name, page_graphics, driver, page_report, locacion)
+                download_graphics(page_name, page_graphics, driver, locacion)
                 unclick_location_button(driver, locacion)
                 print('')
         else:
             print('\nBuscar por mes ...\n')
-            download_graphics(page_name, page_graphics, driver, page_report)
+            download_graphics(page_name, page_graphics, driver)
             print('')
 
     finally:
@@ -135,7 +135,7 @@ def graphics_capture_by_page(locaciones, options, page_report):
     print("'-----------------------------------------------------------------------'")
 
 # Captura de graficos de Power Bi por pagina
-def powerbi_graphics_capture(locaciones, PAGES_REPORT):
+def take_powerbi_graphics_main(locaciones, PAGES_REPORT):
     options = Options()
     options.add_argument("--start-maximized")
     options.add_argument("--user-data-dir=C:\\Users\\AYACDA23\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 6")
