@@ -114,7 +114,7 @@ def graphics_capture_by_page(locaciones, options, page_report, mail_report_folde
         print("[*] Esperando a que cargue la página")
 
         WebDriverWait(driver, 20) # 20 segundos para que se cargue la pagina
-        print("[*] Pagina cargada (9 seg de renderizado) ...")
+        print("[*] Pagina cargada (15 seg de renderizado) ...")
         time.sleep(15) # 15 segundos adicionales para renderizado de la pagina
 
         if filter_report_by == 'locacion':

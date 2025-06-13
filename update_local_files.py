@@ -76,6 +76,15 @@ def set_transportista_code_mail_file(df, document, transportistas_code):
     return df
 
 # Escribir al CSV sobrescribiendo el original
+def backup_local_file_changes(document, backup_address):
+    text = f'[✓] Archivo ({document['local_file_name']}) guardado Correctamente'
+    log.write_log(text)
+    
+    df_updated = df_updated.write_csv(separator=";")
+    with open(document['local_file_address'], "w", encoding="utf-8-sig") as f:
+        f.write(df_updated)
+
+# Escribir al CSV sobrescribiendo el original
 def save_local_file_changes(df_updated, document):
     text = f'[✓] Archivo ({document['local_file_name']}) guardado Correctamente'
     log.write_log(text)
