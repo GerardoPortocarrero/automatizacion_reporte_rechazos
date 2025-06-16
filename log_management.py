@@ -1,13 +1,13 @@
 import os
 
 # Borrar registros de archivo
-def delete_log():
-    with open("log.txt", "w") as f:
+def delete_log(project_address):
+    with open(os.path.join(project_address, "log.txt"), "w") as f:
         pass  # Esto borra el archivo (modo 'w' lo trunca)
 
 # Escribir registros en el archivo
-def write_log(text):
-    with open("log.txt", "a", encoding="utf-8") as f:
+def write_log(project_address, text):
+    with open(os.path.join(project_address, "log.txt"), "a", encoding="utf-8") as f:
         f.write(f"{text}\n")
 
 # Mostrar registros de archivo

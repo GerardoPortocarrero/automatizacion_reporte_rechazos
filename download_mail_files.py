@@ -75,9 +75,6 @@ def download_mail_files(mails, MAIL_ITEM_CODE, root_address, test_address, trans
             # Checar si ya tenemos ambos para esta fecha
             if (transportista['name'] in files_found[string_date_mail]) and (ruta['name'] in files_found[string_date_mail]):
                 datos = files_found[string_date_mail]
-
-                for x,y in datos.items():
-                    print(f'{x}: {y}')
                 
                 return (
                     datos[transportista['name']]['file_address'], datos[transportista['name']]['received_time'],
