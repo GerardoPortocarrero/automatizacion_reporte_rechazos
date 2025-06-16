@@ -27,8 +27,8 @@ def read_log(project_address, ruta_txt):
     ancho_total = ancho_max + margen
 
     # Crear marco superior
-    print("╔" + "═" * ancho_total + "╗")
-    print("║{:^{}}║".format(" CONTENIDO DEL ARCHIVO ", ancho_total))
+    print("\n╔" + "═" * ancho_total + "╗")
+    print("║{:^{}}║".format(" REGISTROS ", ancho_total))
     print("╠" + "═" * ancho_total + "╣")
 
     # Imprimir cada línea dentro del marco
