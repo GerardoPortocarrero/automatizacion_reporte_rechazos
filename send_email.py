@@ -57,11 +57,10 @@ def send_email_main(mail_report_folder_address, project_address, month, year, MA
     mail.Subject = f'Seguimiento de Rechazos (Actualización {month} del {year})'
     
     # Destinatarios principales
-    #mail.To = MAIL_TO
-    mail.To = 'gportocarrerob@unsa.edu.pe'
+    mail.To = MAIL_TO
 
     # Con copia (CC)
-    #mail.CC = MAIL_CC
+    mail.CC = MAIL_CC
 
     # Cuerpo en HTML
     mail.HTMLBody = html_body
