@@ -180,3 +180,4 @@ cython_debug/
 mail_report/*.png
 mail_report/index.html
 *.txt
+main.py

@@ -122,11 +122,11 @@ def read_local_file(local_file_address):
     return df_local
 
 # Actualizar el archivo local con los datos del correo
-def update_local_file(document, locaciones, root_address, test_address, vendedores, transportistas_code):
+def update_local_file(document, locaciones, vendedores, transportistas_code):
     # Rutas de archivo
     mail_file_address = document['mail_file_address']
     mail_sheet_name = document['mail_sheet_name']
-    local_file_address = os.path.join(root_address+test_address, document['local_file_name'])
+    local_file_address = document['local_file_address']
 
     # Leer datos del archivo local
     df_local = read_local_file(local_file_address)

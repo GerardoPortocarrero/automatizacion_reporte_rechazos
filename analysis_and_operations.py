@@ -18,9 +18,9 @@ def read_local_file(local_file_address):
     return df_local
 
 # Hacer calculos para los porcentajes y totales
-def make_calculations_for_locations(root_address, test_address, locaciones, transportista, ruta, month, year):
-    local_transportista_address = os.path.join(root_address+test_address, transportista['local_file_name'])
-    local_ruta_address = os.path.join(root_address+test_address, ruta['local_file_name'])
+def make_calculations_for_locations(locaciones, transportista, ruta, month, year):
+    local_transportista_address = transportista['local_file_address']
+    local_ruta_address = ruta['local_file_address']
 
     transportista_updated = read_local_file(local_transportista_address)
     ruta_updated = read_local_file(local_ruta_address)
