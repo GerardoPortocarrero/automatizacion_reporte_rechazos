@@ -81,14 +81,14 @@ def set_transportista_code_mail_file(df, document, transportistas_code):
     return df
 
 # Escribir al CSV sobrescribiendo el original
-def backup_local_file_changes(document, backup_address):
+def backup_local_file_changes(project_address, document, backup_address):
     # Copiar archivo
     # copy: no copia metadatos (fecha, permisos)
     # copy2: si copia metadatos (fecha, permisos)
     shutil.copy(document['local_file_address'], backup_address)
 
     text = f'[✓] Backup de ({document['local_file_name']}) generado correctamente'
-    log.write_log(text)
+    log.write_log(project_address, text)
 
 # Escribir al CSV sobrescribiendo el original
 def save_local_file_changes(df_updated, document):
