@@ -42,7 +42,7 @@ def send_email_main(mail_report_folder_address, project_address, month, year, MA
     mail = outlook.CreateItem(0) # 0 = MailItem
 
     # Leer el archivo HTML
-    with open(f'{mail_report_folder_address}/index.html', "r", encoding="utf-8") as f:
+    with open(os.path.join(mail_report_folder_address, 'index.html'), "r", encoding="utf-8") as f:
         html_body = f.read()
 
     soup = BeautifulSoup(html_body, "html.parser")

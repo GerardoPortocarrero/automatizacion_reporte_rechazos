@@ -111,7 +111,7 @@ def build_sedes_calculations(locaciones, calculations):
 # Usar template para rellenar los bloques de sedes
 def create_html_report_main(mail_report_folder_address, locaciones, calculations, month, year, total_rechazos, months):
     # Leer el HTML desde archivo
-    with open(f'{mail_report_folder_address}/template.html', "r", encoding="utf-8") as f:
+    with open(os.path.join(mail_report_folder_address, 'template.html'), "r", encoding="utf-8") as f:
         html = f.read()
 
     soup = BeautifulSoup(html, "html.parser")
@@ -130,5 +130,5 @@ def create_html_report_main(mail_report_folder_address, locaciones, calculations
         contenedor.append(crear_bloque_sede(sede, soup))
 
     # Guardar el HTML actualizado
-    with open(f'{mail_report_folder_address}/index.html', "w", encoding="utf-8") as f:
+    with open(os.path.join(mail_report_folder_address, 'template.html'), "w", encoding="utf-8") as f:
         f.write(str(soup))
