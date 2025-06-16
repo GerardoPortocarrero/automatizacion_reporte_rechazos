@@ -178,7 +178,7 @@ def update_local_file(document, locaciones, vendedores, transportistas_code):
         return df_updated, False, mail_most_recent_date
     
     else:
-        print(f"⚠️ No hay datos nuevos en el archivo de correo '{mail_file_address}' para la hoja '{mail_sheet_name}'.")
+        print(f"\n⚠️ No hay datos nuevos en el archivo de correo '{mail_file_address}' para la hoja '{mail_sheet_name}'.")
 
         # Convertir a polars
         df_local = pl.from_pandas(df_local)
