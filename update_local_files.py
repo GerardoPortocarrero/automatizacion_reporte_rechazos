@@ -91,16 +91,16 @@ def backup_local_file_changes(project_address, document, backup_address):
     log.write_log(project_address, text)
 
 # Escribir al CSV sobrescribiendo el original
-def save_local_file_changes(df_updated, document):
+def save_local_file_changes(project_address, df_updated, document):
     text = f'[✓] Archivo ({document['local_file_name']}) guardado Correctamente'
-    log.write_log(text)
+    log.write_log(project_address, text)
     
     df_updated = df_updated.write_csv(separator=";")
     with open(document['local_file_address'], "w", encoding="utf-8-sig") as f:
         f.write(df_updated)
 
 # Eliminar archivo del correo
-def delete_mail_files(path):
+def delete_mail_files(project_address, path):
     # Buscar todos los archivos .xlsx en esa carpeta
     archivos_excel = glob.glob(os.path.join(path, "*.xlsx"))
 
@@ -112,7 +112,7 @@ def delete_mail_files(path):
             pass
 
     text = f'[✓] Archivos de correo eliminados'
-    log.write_log(text)
+    log.write_log(project_address, text)
 
 # Leer datos del archivo local
 def read_local_file(local_file_address):
