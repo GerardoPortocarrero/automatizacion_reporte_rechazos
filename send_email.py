@@ -36,7 +36,7 @@ def embedir_imagenes_en_html(soup, mail, ruta_base_imagenes):
             img_tag["src"] = f"cid:{cid}"
 
 # Enviar correo atravéz de outlook
-def send_email_main(mail_report_folder_address, project_address, month, year, MAIL_TO, MAIL_CC):
+def send_email_main(mail_report_folder_address, project_address, day, month, year, MAIL_TO, MAIL_CC):
     # Crear instancia de Outlook
     outlook = win32com.client.Dispatch("Outlook.Application")
     mail = outlook.CreateItem(0) # 0 = MailItem
@@ -54,7 +54,7 @@ def send_email_main(mail_report_folder_address, project_address, month, year, MA
     html_body = str(soup)
 
     # Asunto
-    mail.Subject = f'Seguimiento de Rechazos (Actualización {month} del {year})'
+    mail.Subject = f'Seguimiento de Rechazos (Actualizado hasta {day} de {month} del {year})'
     
     # Destinatarios principales
     mail.To = MAIL_TO
