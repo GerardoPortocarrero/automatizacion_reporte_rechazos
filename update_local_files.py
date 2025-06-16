@@ -2,6 +2,8 @@ import os
 import pandas as pd
 import polars as pl
 from datetime import datetime
+import shutil
+import glob
 import log_management as log
 
 # Eliminar solamente columnas llamadas Unnamed
@@ -32,17 +34,20 @@ def filter_mail_file_locations(df, locaciones):
 # Extraer datos que no se encuentran en el archivo local por fecha
 def filter_mail_file_dates(document, df_mail, df_local):
     df_local_copy = df_local.copy()
+    df_mail_copy = df_mail.copy()
 
-    # Convertir columna 'Fecha2' a datetime en archivo recibido
+    # Convertir columna 'Fecha2' a datetime en archivo local y correo
     df_local_copy[document['date']+"2"] = pd.to_datetime(df_local_copy[document['date']], dayfirst=True, errors='coerce')
+    df_mail_copy[document['date']+"2"] = pd.to_datetime(df_mail_copy[document['date']], dayfirst=True, errors='coerce')
 
     # Fecha máxima en archivo local
     fecha_max_local = df_local_copy[document['date']+"2"].max()
+    fecha_max_mail = df_mail_copy[document['date']+"2"].max()
 
     # Filtrar solo filas con fecha mayor que la máxima del local
     df_mail = df_mail[df_mail[document['date']] > fecha_max_local].copy()
-
-    return df_mail
+    
+    return df_mail, fecha_max_local.strftime('%d/%m/%Y'), fecha_max_mail.strftime('%d/%m/%Y')
 
 # Actualizar archivo si tiene columna 'Mesa Comercial'
 def customized_ruta_mail_file(df, vendedores):
@@ -77,12 +82,13 @@ def set_transportista_code_mail_file(df, document, transportistas_code):
 
 # Escribir al CSV sobrescribiendo el original
 def backup_local_file_changes(document, backup_address):
-    text = f'[✓] Archivo ({document['local_file_name']}) guardado Correctamente'
+    # Copiar archivo
+    # copy: no copia metadatos (fecha, permisos)
+    # copy2: si copia metadatos (fecha, permisos)
+    shutil.copy(document['local_file_address'], backup_address)
+
+    text = f'[✓] Backup de ({document['local_file_name']}) generado correctamente'
     log.write_log(text)
-    
-    df_updated = df_updated.write_csv(separator=";")
-    with open(document['local_file_address'], "w", encoding="utf-8-sig") as f:
-        f.write(df_updated)
 
 # Escribir al CSV sobrescribiendo el original
 def save_local_file_changes(df_updated, document):
@@ -92,6 +98,21 @@ def save_local_file_changes(df_updated, document):
     df_updated = df_updated.write_csv(separator=";")
     with open(document['local_file_address'], "w", encoding="utf-8-sig") as f:
         f.write(df_updated)
+
+# Eliminar archivo del correo
+def delete_mail_files(path):
+    # Buscar todos los archivos .xlsx en esa carpeta
+    archivos_excel = glob.glob(os.path.join(path, "*.xlsx"))
+
+    # Eliminar cada archivo encontrado
+    for archivo in archivos_excel:
+        try:
+            os.remove(archivo)
+        except Exception as e:
+            pass
+
+    text = f'[✓] Archivos de correo eliminados'
+    log.write_log(text)
 
 # Leer datos del archivo local
 def read_local_file(local_file_address):
@@ -116,7 +137,7 @@ def update_local_file(document, locaciones, root_address, test_address, vendedor
 
     # Filtrar datos del archivo de correo
     df_mail = filter_mail_file_locations(df_mail, locaciones)
-    df_mail = filter_mail_file_dates(document, df_mail, df_local)
+    df_mail, local_most_recent_date, mail_most_recent_date = filter_mail_file_dates(document, df_mail, df_local)
 
     # Si hay datos nuevos para actualizar el archivo local
     if len(df_mail) > 0:
@@ -154,7 +175,7 @@ def update_local_file(document, locaciones, root_address, test_address, vendedor
         # print(f'Updated: {df_mail.schema}')
         # print(df_updated.shape)
 
-        return df_updated, False
+        return df_updated, False, mail_most_recent_date
     
     else:
         print(f"⚠️ No hay datos nuevos en el archivo de correo '{mail_file_address}' para la hoja '{mail_sheet_name}'.")
@@ -162,4 +183,4 @@ def update_local_file(document, locaciones, root_address, test_address, vendedor
         # Convertir a polars
         df_local = pl.from_pandas(df_local)
 
-        return df_local, True
+        return df_local, True, local_most_recent_date
