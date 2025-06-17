@@ -47,7 +47,7 @@ def filter_mail_file_dates(document, df_mail, df_local):
     # Filtrar solo filas con fecha mayor que la máxima del local
     df_mail = df_mail[df_mail[document['date']] > fecha_max_local].copy()
     
-    return df_mail, fecha_max_local.strftime('%d/%m/%Y'), fecha_max_mail.strftime('%d/%m/%Y')
+    return df_mail, fecha_max_local.strftime('%Y-%m-%d'), fecha_max_mail.strftime('%Y-%m-%d')
 
 # Actualizar archivo si tiene columna 'Mesa Comercial'
 def customized_ruta_mail_file(df, vendedores):
@@ -180,7 +180,7 @@ def update_local_file(document, locaciones, vendedores, transportistas_code):
     else:
         print("⚠️ No hay datos nuevos en el archivo de correo:")
         print(f"📄 {mail_file_address}")
-        print(f"→ Hoja: '{mail_sheet_name}'")
+        print(f"→ Hoja: '{mail_sheet_name}'\n")
 
         # Convertir a polars
         df_local = pl.from_pandas(df_local)
