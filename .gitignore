@@ -179,6 +179,7 @@ cython_debug/
 .exe
 mail_report/*.png
 mail_report/index.html
+mail_report/template.html
 *.txt
 main.py
 *.bat
