@@ -127,6 +127,7 @@ def update_local_file(document, locaciones, vendedores, transportistas_code):
     mail_file_address = document['mail_file_address']
     mail_sheet_name = document['mail_sheet_name']
     local_file_address = document['local_file_address']
+    date_column = document['date']
 
     # Leer datos del archivo local
     df_local = read_local_file(local_file_address)
@@ -147,28 +148,39 @@ def update_local_file(document, locaciones, vendedores, transportistas_code):
         # Actualizar el codigo de transportista para ambos archivos
         df_mail = set_transportista_code_mail_file(df_mail, document, transportistas_code)
 
-        # Asegurar los mismos tipos de datos (str, int, ...)
+        # Igualar columnas
         df_mail.columns = df_local.columns
+
         # Forzar columnas a tipo string si están completamente vacías para evitar el tipo Null
         for col in df_mail.columns:
             if df_mail[col].isnull().all():
-                df_mail[col] = df_mail[col].astype(str)
-        # Forzar copiar el tipado de local a las columnas del mail
-        df_mail = df_mail.astype(df_local.dtypes.to_dict())
+                df_mail[col] = df_mail[col].astype(str)                
 
         # Convertir la fecha a string, incluso si los valores son datetime dentro de "object"
-        df_mail[document['date']] = df_mail[document['date']].apply(lambda x: x.strftime('%d/%m/%Y') if isinstance(x, pd.Timestamp) or isinstance(x, datetime) else str(x))        
+        df_mail[date_column] = df_mail[date_column].apply(lambda x: x.strftime('%d/%m/%Y') if isinstance(x, pd.Timestamp) or isinstance(x, datetime) else str(x))        
 
         # Convertir a Polars
         df_local = pl.from_pandas(df_local)
         df_mail = pl.from_pandas(df_mail)
 
+        # Forzar tipado de df_mail igual al de df_local (excepto fecha)
+        try:
+            schema_local = df_local.schema
+            schema_to_cast = {k: v for k, v in schema_local.items() if k != date_column}
+            df_mail = df_mail.cast(schema_to_cast)
+        except Exception as e:
+            print("⚠️ Error al castear tipos en Polars:", e)
+
         if df_mail.schema != df_local.schema:
-            print("⚠️ Los esquemas no coinciden")
-            print(f'Local schema: {df_local.schema}')
-            print(f'Local shape: {df_local.shape}')
-            print(f'Mail schema: {df_mail.schema}')
-            print(f'Mail shape: {df_mail.shape}')
+            print("⚠️  Los esquemas entre los DataFrames no coinciden:")
+            print("──────────────────────────────────────────────")
+            print("📁 Archivo LOCAL:")
+            print(f"   🧬 Schema : {df_local.schema}")
+            print(f"   🔢 Shape  : {df_local.shape}")
+            print("📥 Archivo del CORREO:")
+            print(f"   🧬 Schema : {df_mail.schema}")
+            print(f"   🔢 Shape  : {df_mail.shape}")
+            print("──────────────────────────────────────────────\n")
 
         # Combinar los datos (sin eliminar duplicados)
         df_updated = pl.concat([df_local, df_mail])
@@ -178,9 +190,11 @@ def update_local_file(document, locaciones, vendedores, transportistas_code):
         return df_updated, False, mail_most_recent_date
     
     else:
-        print("⚠️ No hay datos nuevos en el archivo de correo:")
-        print(f"📄 {mail_file_address}")
-        print(f"→ Hoja: '{mail_sheet_name}'\n")
+        print("ℹ️  No se encontraron datos nuevos para actualizar.")
+        print("──────────────────────────────────────────────")
+        print(f"📄 Archivo: {mail_file_address}")
+        print(f"📑 Hoja   : '{mail_sheet_name}'")
+        print("──────────────────────────────────────────────\n")
 
         # Convertir a polars
         df_local = pl.from_pandas(df_local)
