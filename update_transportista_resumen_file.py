@@ -12,7 +12,7 @@ def get_meta(meta, loc, año, mes):
 def create_transportista_resumen_file(meta, df):
     # Asegurar tipos
     df = df.with_columns([
-        pl.col("Fecha").str.strptime(pl.Date, "%d/%m/%Y", strict=False),
+        pl.col("Fecha").str.strptime(pl.Date, "%Y-%m-%d", strict=False),
         pl.col("Carga Pvta CF").cast(pl.Float64),
         pl.col("Rechazo CF").cast(pl.Float64)
     ])
