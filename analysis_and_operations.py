@@ -11,7 +11,7 @@ def delete_unnamed_columns(df):
 
 # Leer datos del archivo local
 def read_local_file(local_file_address):
-    df_local = pd.read_csv(local_file_address, sep=';')
+    df_local = pd.read_csv(local_file_address, sep=',')
     df_local = delete_unnamed_columns(df_local)
     df_local = pl.from_pandas(df_local)
 

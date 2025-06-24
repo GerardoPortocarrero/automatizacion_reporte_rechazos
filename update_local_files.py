@@ -43,9 +43,6 @@ def filter_mail_file_dates(document, df_mail, df_local):
     df_local_copy = df_local.copy()
     df_mail_copy = df_mail.copy()
 
-    # Convertir a string para convertirlo luego a date
-    df_local_copy[document['date']+"2"] = df_local_copy[document['date']].apply(lambda x: x.strftime('%d/%m/%Y') if isinstance(x, pd.Timestamp) or isinstance(x, datetime) else str(x))        
-
     # Convertir columna 'Fecha2' a datetime en archivo local y correo
     df_local_copy[document['date']+"2"] = pd.to_datetime(df_local_copy[document['date']], errors='coerce')
     df_mail_copy[document['date']+"2"] = pd.to_datetime(df_mail_copy[document['date']], dayfirst=True, errors='coerce')
@@ -106,13 +103,13 @@ def save_local_file_changes(project_address, root_address, df_updated, document)
     text = f'[✓] Archivo ({document['local_file_name']}) guardado Correctamente'
     log.write_log(project_address, text)
     
-    df_updated = df_updated.write_csv(separator=",")
+    df_updated_project = df_updated.write_csv(separator=",")
     with open(document['local_file_address'], "w", encoding="utf-8-sig") as f:
-        f.write(df_updated)
+        f.write(df_updated_project)
 
-    df_updated = df_updated.write_csv(separator=";")
+    df_update_root = df_updated.write_csv(separator=";")
     with open(os.path.join(root_address, document['local_file_name']), "w", encoding="utf-8-sig") as f:
-        f.write(df_updated)
+        f.write(df_update_root)
 
 # Eliminar archivo del correo
 def delete_mail_files(project_address):
@@ -172,7 +169,7 @@ def update_local_file(document, locaciones, vendedores, transportistas_code):
                 df_mail[col] = df_mail[col].astype(str)
         
         # Convertir la fecha a string, incluso si los valores son datetime dentro de "object"
-        df_mail[date_column] = df_mail[date_column].apply(lambda x: x.strftime('%d/%m/%Y') if isinstance(x, pd.Timestamp) or isinstance(x, datetime) else str(x))        
+        df_mail[date_column] = df_mail[date_column].apply(lambda x: x.strftime('%Y-%m-%d') if isinstance(x, pd.Timestamp) or isinstance(x, datetime) else str(x))        
 
         # Convertir a Polars
         df_local = pl.from_pandas(df_local)
