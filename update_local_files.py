@@ -106,10 +106,11 @@ def save_local_file_changes(project_address, root_address, df_updated, document)
     text = f'[✓] Archivo ({document['local_file_name']}) guardado Correctamente'
     log.write_log(project_address, text)
     
-    df_updated = df_updated.write_csv(separator=";")
+    df_updated = df_updated.write_csv(separator=",")
     with open(document['local_file_address'], "w", encoding="utf-8-sig") as f:
         f.write(df_updated)
 
+    df_updated = df_updated.write_csv(separator=";")
     with open(os.path.join(root_address, document['local_file_name']), "w", encoding="utf-8-sig") as f:
         f.write(df_updated)
 
