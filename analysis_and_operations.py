@@ -27,20 +27,20 @@ def make_calculations_for_locations(locaciones, transportista, ruta, month, year
 
     calculations = {}
     # Crear fechas de inicio y fin como objetos datetime de Python
-    started_date = datetime.strptime(f"01/{month}/{year}", "%d/%m/%Y")
+    started_date = datetime.strptime(f"{year}-{month}-01", "%Y-%m-%d")
     # Aseguramos que si month = 12, se pase al siguiente año
     if int(month) == 12:
-        ended_date = datetime.strptime(f"01/01/{int(year) + 1}", "%d/%m/%Y")
+        ended_date = datetime.strptime(f"{int(year) + 1}-01-01", "%Y-%m-%d")
     else:
-        ended_date = datetime.strptime(f"01/{int(month)+1}/{year}", "%d/%m/%Y")
+        ended_date = datetime.strptime(f"{year}-{int(month)+1}-01", "%Y-%m-%d")
 
     # Convertir la columna a fecha
     transportista_updated = transportista_updated.with_columns(
-        pl.col(transportista["date"]).str.strptime(pl.Date, "%d/%m/%Y", strict=False)
+        pl.col(transportista["date"]).str.strptime(pl.Date, "%Y-%m-%d", strict=False)
     )
 
     ruta_updated = ruta_updated.with_columns(
-        pl.col(ruta["date"]).str.strptime(pl.Date, "%d/%m/%Y", strict=False)
+        pl.col(ruta["date"]).str.strptime(pl.Date, "%Y-%m-%d", strict=False)
     )
 
     # Filtrado con fechas
@@ -61,17 +61,19 @@ def make_calculations_for_locations(locaciones, transportista, ruta, month, year
 
         # Sumar columnas específicas
         venta_perdida_cf = df_ruta.select(pl.col("Venta Perdida CF").sum()).item()
-        carga_total = df_transportista.select(pl.col("Carga Pvta CF").sum()).item()
+        carga_total_cf = df_transportista.select(pl.col("Carga Pvta CF").sum()).item()
+        carga_total_cu = df_transportista.select(pl.col("Carga Total CU").sum()).item()
 
         # Calcular porcentaje
-        porcentaje_cf = (venta_perdida_cf * 100 / carga_total) if venta_perdida_cf > 0 else 0
+        porcentaje_cf = (venta_perdida_cf * 100 / carga_total_cf) if venta_perdida_cf > 0 else 0
 
         # Agregar resultado
         calculations[locacion] = {
             "locacion": locacion,
             "porcentaje_cf": f"{porcentaje_cf:.2f}%",
             "venta_perdida_cf": venta_perdida_cf,
-            "carga_cf": carga_total
+            "carga_cf": carga_total_cf,
+            "carga_cu": carga_total_cu,
         }
 
     total_rechazos = 0

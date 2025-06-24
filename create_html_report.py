@@ -49,12 +49,14 @@ def crear_bloque_sede(sede, soup):
 
     # Texto resumen
     resumen_textos = [
-        f'{sede["nombre"]} alcanzó un <strong style="color: #cc0000;">{sede["porcentaje"]}</strong> de CF RECH.',
-        f'Venta Rechazada: <strong style="color: #cc0000;">{sede["total_rechazos"]} CF</strong>.',
-        f'Carga Total: <strong>{sede["total_carga"]} CF</strong>.'
+        f'<strong style="color: #2c3e50; font-size: 15px;">📍 {sede["nombre"]}</strong> alcanzó un <strong style="color: #cc0000;">{sede["porcentaje"]}</strong> de CF RECH.',
+        f'❌ Venta Rechazada: <strong style="color: #cc0000;">{sede["total_rechazos"]} CF</strong>.',
+        f'📦 Carga Total en CF: <strong style="color: #2c3e50;">{sede["total_carga_cf"]} CF</strong>.',
+        f'🧴 Carga Total en CU: <strong style="color: #2c3e50;">{sede["total_carga_cu"]} CU</strong>.'
     ]
+
     for txt in resumen_textos:
-        p = soup.new_tag("p", style="margin: 4px 0;")
+        p = soup.new_tag("p", style="margin: 6px 0; font-size: 14px; font-family: Arial, sans-serif;")
         p.append(BeautifulSoup(txt, "html.parser"))
         bloque.append(p)
 
@@ -98,7 +100,8 @@ def build_sedes_calculations(locaciones, calculations):
             "nombre": loc,
             "porcentaje": calculations[loc]['porcentaje_cf'], # porcentajes.get(loc, "0.00%"),
             "total_rechazos": f'{calculations[loc]['venta_perdida_cf']:.2f}', # venta perdida cf por localidad
-            "total_carga": f'{calculations[loc]['carga_cf']:.2f}', # carga cf por localidad
+            "total_carga_cf": f'{calculations[loc]['carga_cf']:.2f}', # carga cf por localidad
+            "total_carga_cu": f'{calculations[loc]['carga_cu']:.2f}', # carga cf por localidad
             "imagenes": [f"RECHAZOS-{loc}-{i}.png" for i in range(1, 4)],
             "detalle": f"DETALLES-{loc}-1.png",
             "evolucion": f"RECHAZOS-{loc}-4.png"
