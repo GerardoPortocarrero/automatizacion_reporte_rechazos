@@ -6,6 +6,13 @@ import shutil
 import glob
 import log_management as log
 
+# Crear archivo csv si no existe
+def create_csv_from_scratch(document, root_address, project_address):
+    df = pd.read_excel(os.path.join(root_address, document['source_local_file_name']), sheet_name=document['source_local_sheet_name'])
+
+    # Guardar a CSV
+    df.to_csv(os.path.join(project_address, document['local_file_name']), index=False, encoding='utf-8-sig')
+
 # Eliminar solamente columnas llamadas Unnamed
 def delete_unnamed_columns(df):    
     df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
@@ -36,8 +43,11 @@ def filter_mail_file_dates(document, df_mail, df_local):
     df_local_copy = df_local.copy()
     df_mail_copy = df_mail.copy()
 
+    # Convertir a string para convertirlo luego a date
+    df_local_copy[document['date']+"2"] = df_local_copy[document['date']].apply(lambda x: x.strftime('%d/%m/%Y') if isinstance(x, pd.Timestamp) or isinstance(x, datetime) else str(x))        
+
     # Convertir columna 'Fecha2' a datetime en archivo local y correo
-    df_local_copy[document['date']+"2"] = pd.to_datetime(df_local_copy[document['date']], dayfirst=True, errors='coerce')
+    df_local_copy[document['date']+"2"] = pd.to_datetime(df_local_copy[document['date']], errors='coerce')
     df_mail_copy[document['date']+"2"] = pd.to_datetime(df_mail_copy[document['date']], dayfirst=True, errors='coerce')
 
     # Fecha máxima en archivo local
@@ -85,13 +95,14 @@ def backup_local_file_changes(project_address, document, backup_address):
     # Copiar archivo
     # copy: no copia metadatos (fecha, permisos)
     # copy2: si copia metadatos (fecha, permisos)
-    shutil.copy(document['local_file_address'], backup_address)
+    if os.path.exists(document['local_file_address']):
+        shutil.copy(document['local_file_address'], backup_address)
 
-    text = f'[✓] Backup de ({document['local_file_name']}) generado correctamente'
-    log.write_log(project_address, text)
+        text = f'[✓] Backup de ({document['local_file_name']}) generado correctamente'
+        log.write_log(project_address, text)
 
 # Escribir al CSV sobrescribiendo el original
-def save_local_file_changes(project_address, df_updated, document):
+def save_local_file_changes(project_address, root_address, df_updated, document):
     text = f'[✓] Archivo ({document['local_file_name']}) guardado Correctamente'
     log.write_log(project_address, text)
     
@@ -99,10 +110,13 @@ def save_local_file_changes(project_address, df_updated, document):
     with open(document['local_file_address'], "w", encoding="utf-8-sig") as f:
         f.write(df_updated)
 
+    with open(os.path.join(root_address, document['local_file_name']), "w", encoding="utf-8-sig") as f:
+        f.write(df_updated)
+
 # Eliminar archivo del correo
-def delete_mail_files(project_address, path):
-    # Buscar todos los archivos .xlsx en esa carpeta
-    archivos_excel = glob.glob(os.path.join(path, "*.xlsx"))
+def delete_mail_files(project_address):
+    # Buscar todos los archivos .xlsx en la carpeta del proyecto
+    archivos_excel = glob.glob(os.path.join(project_address, "*.xlsx"))
 
     # Eliminar cada archivo encontrado
     for archivo in archivos_excel:
@@ -116,7 +130,7 @@ def delete_mail_files(project_address, path):
 
 # Leer datos del archivo local
 def read_local_file(local_file_address):
-    df_local = pd.read_csv(local_file_address, sep=';')
+    df_local = pd.read_csv(local_file_address, sep=',')
     df_local = delete_unnamed_columns(df_local)
 
     return df_local
@@ -154,8 +168,8 @@ def update_local_file(document, locaciones, vendedores, transportistas_code):
         # Forzar columnas a tipo string si están completamente vacías para evitar el tipo Null
         for col in df_mail.columns:
             if df_mail[col].isnull().all():
-                df_mail[col] = df_mail[col].astype(str)                
-
+                df_mail[col] = df_mail[col].astype(str)
+        
         # Convertir la fecha a string, incluso si los valores son datetime dentro de "object"
         df_mail[date_column] = df_mail[date_column].apply(lambda x: x.strftime('%d/%m/%Y') if isinstance(x, pd.Timestamp) or isinstance(x, datetime) else str(x))        
 

@@ -15,7 +15,7 @@ def fix_misplaced_headers(df):
     return df
 
 # Descargar archivos del correo
-def download_mail_files(mails, MAIL_ITEM_CODE, root_address, test_address, transportista, ruta):
+def download_mail_files(mails, MAIL_ITEM_CODE, project_address, transportista, ruta):
     files_found = {} # {
                      #  9/06/2025: {'transportista': {}, 'ruta': {}},
                      #  10/06/2025: {'transportista': {}, 'ruta': {}},                     
@@ -47,7 +47,7 @@ def download_mail_files(mails, MAIL_ITEM_CODE, root_address, test_address, trans
             
             # Guardar archivo excel con alguno de los asuntos
             file_name = attachment.FileName
-            file_address = os.path.join(root_address + test_address, file_name)
+            file_address = os.path.join(project_address, file_name)
             attachment.SaveAsFile(file_address)
 
             # Validar contenido
