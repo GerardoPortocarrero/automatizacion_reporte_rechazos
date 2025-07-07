@@ -17,17 +17,27 @@ def create_transportista_resumen_file(meta, df):
         pl.col("Rechazo CF").cast(pl.Float64)
     ])
 
-    # Agregar columnas de año y mes para usar en la función meta
-    df = df.with_columns([
+    # Extraer fechas y locaciones únicas
+    fechas = df.select("Fecha").unique()
+    locaciones = df.select("Locación").unique()
+
+    # Producto cartesiano de Fecha x Locación
+    fechas_locaciones = fechas.join(locaciones, how="cross").with_columns([
         pl.col("Fecha").dt.year().alias("Año"),
         pl.col("Fecha").dt.month().alias("Mes")
     ])
 
-    # Agrupar por Fecha y Locación
-    df = df.group_by(["Fecha", "Locación", "Año", "Mes"]).agg([
+    # Agrupar datos reales
+    df_grouped = df.with_columns([
+        pl.col("Fecha").dt.year().alias("Año"),
+        pl.col("Fecha").dt.month().alias("Mes")
+    ]).group_by(["Fecha", "Locación", "Año", "Mes"]).agg([
         pl.sum("Carga Pvta CF").alias("Total CF Programandas"),
         pl.sum("Rechazo CF").alias("Total CF Rechazadas")
     ])
+
+    # Left join para asegurar todas las combinaciones
+    df = fechas_locaciones.join(df_grouped, on=["Fecha", "Locación", "Año", "Mes"], how="left").fill_null(0)
 
     # Aplicar la función de meta
     df = df.with_columns([
@@ -61,8 +71,5 @@ def create_transportista_resumen_file(meta, df):
         pl.col("End").map_elements(lambda x: f"{math.ceil(x * 100) / 100:.2f}%", return_dtype=pl.Utf8).alias("End"),
         pl.col("% Rechazo").map_elements(lambda x: f"{x:.2%}", return_dtype=pl.Utf8).alias("% Rechazo")
     ])
-
-    # print(f'Transportista resumen: {df.schema}')
-    # print(df.shape)
 
     return df
