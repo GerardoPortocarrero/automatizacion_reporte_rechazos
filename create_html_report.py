@@ -34,31 +34,107 @@ def crear_bloque_sede(sede, soup):
     bloque.append(h3)
 
     # Imágenes resumen pequeñas
-    div_imgs = soup.new_tag("div", style="text-align: center;")
+    table_imgs = soup.new_tag("table", attrs={
+        "width": "100%",
+        "cellpadding": "0",
+        "cellspacing": "0",
+        "border": "0",
+        "style": """
+            margin: 0 auto;
+            text-align: center;
+            border-collapse: collapse;
+        """
+    })
+
+    row = soup.new_tag("tr")
+
     for img_filename in sede["imagenes"]:
+        td = soup.new_tag("td", style="""
+            padding: 8px;
+            text-align: center;
+            vertical-align: top;
+            width: 33.33%;
+        """)
+
         cid = f"cid:{img_filename}"
-        tag_img = soup.new_tag(
-            "img",
-            src=cid,
-            width="230",
-            height="175",
-            style="margin: 6px; border: 1px solid #ccc; border-radius: 6px; box-shadow: 1px 1px 4px rgba(0,0,0,0.1); display: inline-block;"
-        )
-        div_imgs.append(tag_img)
-    bloque.append(div_imgs)
+        img = soup.new_tag("img", src=cid, style="""
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-shadow: 1px 1px 4px rgba(0,0,0,0.1);
+            display: block;
+            margin: 0 auto;
+        """)
+
+        td.append(img)
+        row.append(td)
+
+    table_imgs.append(row)
+    bloque.append(table_imgs)
 
     # Texto resumen
-    resumen_textos = [
-        f'<strong style="color: #2c3e50; font-size: 15px;">📍 {sede["nombre"]}</strong> alcanzó un <strong style="color: #cc0000;">{sede["porcentaje"]}</strong> de CF RECH.',
-        f'❌ Venta Rechazada: <strong style="color: #cc0000;">{sede["total_rechazos"]} CF</strong>.',
-        f'📦 Carga Total en CF: <strong style="color: #2c3e50;">{sede["total_carga_cf"]} CF</strong>.',
-        f'🧴 Carga Total en CU: <strong style="color: #2c3e50;">{sede["total_carga_cu"]} CU</strong>.'
-    ]
+    resumen_html = f"""
+    <div style="width: 100%;">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="
+            margin: 0 auto;
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 0 14px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        ">
+            <tr>
+                <td style="padding: 0px 10px;>
+                    <table width="100%" cellpadding="0" cellspacing="0" style="table-layout: fixed;">
+                        <tr>
+                            <!-- % CF Rechazada + Carga Total CF -->
+                            <td style="padding: 18px 12px;">
+                                <div style="color: #666; font-weight: bold; font-size: 20px; line-height: 1.4;">
+                                    % CF Rechazada
+                                </div>
+                                <div style="color: #cc0000; font-size: 32px; font-weight: bold; line-height: 1.3; margin-top: 6px;">
+                                    {sede["porcentaje"]}
+                                </div>
+                            </td>
+                            <td style="padding: 18px 12px;">
+                                <div style="color: #666; font-weight: bold; font-size: 20px; line-height: 1.4;">
+                                    Carga Total CF
+                                </div>
+                                <div style="color: #2c3e50; font-size: 32px; font-weight: bold; line-height: 1.3; margin-top: 6px;">
+                                    {sede["total_carga_cf"]}
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <!-- Venta Rechazada + Carga Total CU -->
+                            <td style="padding: 18px 12px;">
+                                <div style="color: #666; font-weight: bold; font-size: 20px; line-height: 1.4;">
+                                    Venta Rechazada CF
+                                </div>
+                                <div style="color: #e74c3c; font-size: 32px; font-weight: bold; line-height: 1.3; margin-top: 6px;">
+                                    {sede["total_rechazos"]}
+                                </div>
+                            </td>
+                            <td style="padding: 18px 12px;">
+                                <div style="color: #666; font-weight: bold; font-size: 20px; line-height: 1.4;">
+                                    Carga Total CU
+                                </div>
+                                <div style="color: #2c3e50; font-size: 32px; font-weight: bold; line-height: 1.3; margin-top: 6px;">
+                                    {sede["total_carga_cu"]}
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>
+    """
 
-    for txt in resumen_textos:
-        p = soup.new_tag("p", style="margin: 6px 0; font-size: 14px; font-family: Arial, sans-serif;")
-        p.append(BeautifulSoup(txt, "html.parser"))
-        bloque.append(p)
+    # Luego insertas esto en tu HTML con BeautifulSoup
+    bloque.append(BeautifulSoup(resumen_html, "html.parser"))
 
     # Título detalle
     bloque.append(soup.new_tag("p", string="Detalle:", style="font-weight: bold; margin-top: 18px;"))
@@ -66,10 +142,19 @@ def crear_bloque_sede(sede, soup):
     # Imagen de detalle
     div_detalle = soup.new_tag("div", style="text-align: center;")
     img_detalle = soup.new_tag(
-        "img", 
-        src=f"cid:{sede['detalle']}", 
-        width="715", 
-        style="margin: 10px auto; border: 1px solid #ccc; border-radius: 6px; box-shadow: 1px 1px 4px rgba(0,0,0,0.1); display: block;")
+        "img",
+        src=f"cid:{sede['detalle']}",
+        style="""
+            display: block;
+            margin: 10px auto;
+            width: 100%;
+            max-width: 1010px;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-shadow: 1px 1px 4px rgba(0,0,0,0.1);
+        """
+    )
     div_detalle.append(img_detalle)
     bloque.append(div_detalle)
 
@@ -81,8 +166,17 @@ def crear_bloque_sede(sede, soup):
     img_evo = soup.new_tag(
         "img", 
         src=f"cid:{sede['evolucion']}", 
-        width="715", 
-        style="margin: 10px auto; border: 1px solid #ccc; border-radius: 6px; box-shadow: 1px 1px 4px rgba(0,0,0,0.1); display: block;")
+        style="""
+            display: block;
+            margin: 10px auto;
+            width: 100%;
+            max-width: 1010px;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-shadow: 1px 1px 4px rgba(0,0,0,0.1);
+        """
+    )
     div_evo.append(img_evo)
     bloque.append(div_evo)
 
