@@ -38,23 +38,60 @@ def filter_mail_file_locations(df, locaciones):
 
     return df
 
-# Extraer datos que no se encuentran en el archivo local por fecha
-def filter_mail_file_dates(document, df_mail, df_local):
-    df_local_copy = df_local.copy()
+# Obtener las fechas mas recientes de local y mail
+def get_most_recent_dates(document, df_mail, df_local):
     df_mail_copy = df_mail.copy()
+    df_local_copy = df_local.copy()
 
     # Convertir columna 'Fecha2' a datetime en archivo local y correo
-    df_local_copy[document['date']+"2"] = pd.to_datetime(df_local_copy[document['date']], errors='coerce')
     df_mail_copy[document['date']+"2"] = pd.to_datetime(df_mail_copy[document['date']], dayfirst=True, errors='coerce')
+    df_local_copy[document['date']+"2"] = pd.to_datetime(df_local_copy[document['date']], errors='coerce')    
 
-    # Fecha máxima en archivo local
-    fecha_max_local = df_local_copy[document['date']+"2"].max()
+    # Fecha máxima en archivo de correo y local
     fecha_max_mail = df_mail_copy[document['date']+"2"].max()
-
-    # Filtrar solo filas con fecha mayor que la máxima del local
-    df_mail = df_mail[df_mail[document['date']] > fecha_max_local].copy()
+    fecha_max_local = df_local_copy[document['date']+"2"].max()    
     
-    return df_mail, fecha_max_local.strftime('%Y-%m-%d'), fecha_max_mail.strftime('%Y-%m-%d')
+    return fecha_max_mail, fecha_max_local
+
+# Eliminar datos del mes de local
+def delete_local_month(df, date, date_column):
+    # Crear una copia temporal de la columna como datetime para filtrar
+    temporal_dates = pd.to_datetime(df[date_column], errors='coerce', dayfirst=True)
+
+    # Filtrar las filas que NO pertenecen al mismo mes y año que `date`
+    df_filtrado = df[~((temporal_dates.dt.month == date.month) & (temporal_dates.dt.year == date.year))]
+
+    return df_filtrado
+
+# Extraer datos que no se encuentran en el archivo local por fecha
+def concat_polar_dataframes(df_mail, df_local, date_column):
+    # Convertir a Polars
+    df_local = pl.from_pandas(df_local)
+    df_mail = pl.from_pandas(df_mail)
+
+    # Forzar tipado de df_mail igual al de df_local (excepto fecha)
+    try:
+        schema_local = df_local.schema
+        schema_to_cast = {k: v for k, v in schema_local.items() if k != date_column}
+        df_mail = df_mail.cast(schema_to_cast)
+    except Exception as e:
+        print("⚠️ Error al castear tipos en Polars:", e)
+
+    if df_mail.schema != df_local.schema:
+        print("⚠️  Los esquemas entre los DataFrames no coinciden:")
+        print("──────────────────────────────────────────────")
+        print("📁 Archivo LOCAL:")
+        print(f"   🧬 Schema : {df_local.schema}")
+        print(f"   🔢 Shape  : {df_local.shape}")
+        print("📥 Archivo del CORREO:")
+        print(f"   🧬 Schema : {df_mail.schema}")
+        print(f"   🔢 Shape  : {df_mail.shape}")
+        print("──────────────────────────────────────────────\n")
+
+    # Combinar los datos (sin eliminar duplicados)
+    df_updated = pl.concat([df_local, df_mail])
+
+    return df_updated
 
 # Actualizar archivo si tiene columna 'Mesa Comercial'
 def customized_ruta_mail_file(df, vendedores):
@@ -150,10 +187,10 @@ def update_local_file(document, locaciones, vendedores, transportistas_code):
 
     # Filtrar datos del archivo de correo
     df_mail = filter_mail_file_locations(df_mail, locaciones)
-    df_mail, local_most_recent_date, mail_most_recent_date = filter_mail_file_dates(document, df_mail, df_local)
+    mail_most_recent_date, local_most_recent_date = get_most_recent_dates(document, df_mail, df_local)
 
     # Si hay datos nuevos para actualizar el archivo local
-    if len(df_mail) > 0:
+    if mail_most_recent_date > local_most_recent_date:
         # Configuracion solo para el archivo de ruta
         df_mail = customized_ruta_mail_file(df_mail, vendedores)
 
@@ -171,35 +208,13 @@ def update_local_file(document, locaciones, vendedores, transportistas_code):
         # Convertir la fecha a string, incluso si los valores son datetime dentro de "object"
         df_mail[date_column] = df_mail[date_column].apply(lambda x: x.strftime('%Y-%m-%d') if isinstance(x, pd.Timestamp) or isinstance(x, datetime) else str(x))        
 
-        # Convertir a Polars
-        df_local = pl.from_pandas(df_local)
-        df_mail = pl.from_pandas(df_mail)
+        # Eliminar los datos del mes del archivo local
+        df_local = delete_local_month(df_local, mail_most_recent_date, date_column)
 
-        # Forzar tipado de df_mail igual al de df_local (excepto fecha)
-        try:
-            schema_local = df_local.schema
-            schema_to_cast = {k: v for k, v in schema_local.items() if k != date_column}
-            df_mail = df_mail.cast(schema_to_cast)
-        except Exception as e:
-            print("⚠️ Error al castear tipos en Polars:", e)
+        # Concatenar archivos de correo y local
+        df_updated = concat_polar_dataframes(df_mail, df_local, date_column)
 
-        if df_mail.schema != df_local.schema:
-            print("⚠️  Los esquemas entre los DataFrames no coinciden:")
-            print("──────────────────────────────────────────────")
-            print("📁 Archivo LOCAL:")
-            print(f"   🧬 Schema : {df_local.schema}")
-            print(f"   🔢 Shape  : {df_local.shape}")
-            print("📥 Archivo del CORREO:")
-            print(f"   🧬 Schema : {df_mail.schema}")
-            print(f"   🔢 Shape  : {df_mail.shape}")
-            print("──────────────────────────────────────────────\n")
-
-        # Combinar los datos (sin eliminar duplicados)
-        df_updated = pl.concat([df_local, df_mail])
-        # print(f'Updated: {df_mail.schema}')
-        # print(df_updated.shape)
-
-        return df_updated, False, mail_most_recent_date
+        return df_updated, False, mail_most_recent_date.strftime('%Y-%m-%d')
     
     else:
         print("ℹ️  No se encontraron datos nuevos para actualizar.")
@@ -211,4 +226,4 @@ def update_local_file(document, locaciones, vendedores, transportistas_code):
         # Convertir a polars
         df_local = pl.from_pandas(df_local)
 
-        return df_local, True, local_most_recent_date
+        return df_local, True, local_most_recent_date.strftime('%Y-%m-%d')
