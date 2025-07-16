@@ -55,11 +55,12 @@ def get_most_recent_dates(document, df_mail, df_local):
 
 # Eliminar datos del mes de local
 def delete_local_month(df, date, date_column):
-    # Crear una copia temporal de la columna como datetime para filtrar
-    temporal_dates = pd.to_datetime(df[date_column], errors='coerce', dayfirst=True)
+    # Limpiar columna y convertir a datetime
+    clean_dates = pd.to_datetime(df[date_column].astype(str).str.strip(), errors='coerce')
 
-    # Filtrar las filas que NO pertenecen al mismo mes y año que `date`
-    df_filtrado = df[~((temporal_dates.dt.month == date.month) & (temporal_dates.dt.year == date.year))]
+    # Filtrar filas donde mes y año NO coinciden con `date`
+    mask = ~((clean_dates.dt.month == date.month) & (clean_dates.dt.year == date.year))
+    df_filtrado = df[mask]
 
     return df_filtrado
 
@@ -207,13 +208,17 @@ def update_local_file(document, locaciones, vendedores, transportistas_code):
         
         # Convertir la fecha a string, incluso si los valores son datetime dentro de "object"
         df_mail[date_column] = df_mail[date_column].apply(lambda x: x.strftime('%Y-%m-%d') if isinstance(x, pd.Timestamp) or isinstance(x, datetime) else str(x))        
-
+        
+        print(mail_most_recent_date, local_most_recent_date)
+        a = len(df_local)
         # Eliminar los datos del mes del archivo local
         df_local = delete_local_month(df_local, mail_most_recent_date, date_column)
+        b = len(df_local)
+        print(f'Registros eliminados: {a}-{b}: {a-b}')
 
         # Concatenar archivos de correo y local
         df_updated = concat_polar_dataframes(df_mail, df_local, date_column)
-
+        print(f'Registros del mes: {len(df_updated)}-{b}: {len(df_updated) - b}\n')
         return df_updated, False, mail_most_recent_date.strftime('%Y-%m-%d')
     
     else:
