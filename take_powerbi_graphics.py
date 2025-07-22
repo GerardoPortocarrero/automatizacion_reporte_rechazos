@@ -129,6 +129,9 @@ def graphics_capture_by_page(locaciones, options, page_report, mail_report_folde
             download_graphics(mail_report_folder_address, page_name, page_graphics, driver)
             print('')
 
+    except Exception as e:
+        print(f'ERROR: {e}')
+
     finally:
         driver.quit()
 
