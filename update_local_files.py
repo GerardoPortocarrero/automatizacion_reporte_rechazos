@@ -133,12 +133,12 @@ def backup_local_file_changes(project_address, document, backup_address):
     if os.path.exists(document['local_file_address']):
         shutil.copy(document['local_file_address'], backup_address)
 
-        text = f'[✓] Backup de ({document['local_file_name']}) generado correctamente'
+        text = f'[✓] Backup de Archivo ({document['local_file_name']}) correctamente'
         log.write_log(project_address, text)
 
 # Escribir al CSV sobrescribiendo el original
 def save_local_file_changes(project_address, root_address, df_updated, document):
-    text = f'[✓] Archivo ({document['local_file_name']}) guardado Correctamente'
+    text = f'[✓] Guardado de Archivo ({document['local_file_name']}) correctamente'
     log.write_log(project_address, text)
     
     df_updated_project = df_updated.write_csv(separator=",")
@@ -190,41 +190,34 @@ def update_local_file(document, locaciones, vendedores, transportistas_code):
     df_mail = filter_mail_file_locations(df_mail, locaciones)
     mail_most_recent_date, local_most_recent_date = get_most_recent_dates(document, df_mail, df_local)
 
-    # Si hay datos nuevos para actualizar el archivo local
-    if mail_most_recent_date > local_most_recent_date:
-        # Configuracion solo para el archivo de ruta
-        df_mail = customized_ruta_mail_file(df_mail, vendedores)
+    # Configuracion solo para el archivo de ruta
+    df_mail = customized_ruta_mail_file(df_mail, vendedores)
 
-        # Actualizar el codigo de transportista para ambos archivos
-        df_mail = set_transportista_code_mail_file(df_mail, document, transportistas_code)
+    # Actualizar el codigo de transportista para ambos archivos
+    df_mail = set_transportista_code_mail_file(df_mail, document, transportistas_code)
 
-        # Igualar columnas
-        df_mail.columns = df_local.columns
+    # Igualar columnas
+    df_mail.columns = df_local.columns
 
-        # Forzar columnas a tipo string si están completamente vacías para evitar el tipo Null
-        for col in df_mail.columns:
-            if df_mail[col].isnull().all():
-                df_mail[col] = df_mail[col].astype(str)
+    # Forzar columnas a tipo string si están completamente vacías para evitar el tipo Null
+    for col in df_mail.columns:
+        if df_mail[col].isnull().all():
+            df_mail[col] = df_mail[col].astype(str)
         
-        # Convertir la fecha a string, incluso si los valores son datetime dentro de "object"
-        df_mail[date_column] = df_mail[date_column].apply(lambda x: x.strftime('%Y-%m-%d') if isinstance(x, pd.Timestamp) or isinstance(x, datetime) else str(x))        
+    # Convertir la fecha a string, incluso si los valores son datetime dentro de "object"
+    df_mail[date_column] = df_mail[date_column].apply(lambda x: x.strftime('%Y-%m-%d') if isinstance(x, pd.Timestamp) or isinstance(x, datetime) else str(x))        
         
-        # Eliminar los datos del mes del archivo local
-        df_local = delete_local_month(df_local, mail_most_recent_date, date_column)
+    # Eliminar los datos del mes del archivo local
+    df_local = delete_local_month(df_local, mail_most_recent_date, date_column)
 
-        # Concatenar archivos de correo y local
-        df_updated = concat_polar_dataframes(df_mail, df_local, date_column)
+    # Concatenar archivos de correo y local
+    df_updated = concat_polar_dataframes(df_mail, df_local, date_column)
+
+    print("\nℹ️  No se encontraron datos nuevos para actualizar.")
+    print("╭──────────────────────────────────────────────╮")
+    print(f"│ 📄 Archivo       : {mail_file_address}")
+    print(f"│ 📑 Local Date    : '{local_most_recent_date}'")
+    print(f"│ 📑 Email Date    : '{mail_most_recent_date}'")
+    print("╰──────────────────────────────────────────────╯\n")
         
-        return df_updated, False, mail_most_recent_date.strftime('%Y-%m-%d')
-    
-    else:
-        print("ℹ️  No se encontraron datos nuevos para actualizar.")
-        print("──────────────────────────────────────────────")
-        print(f"📄 Archivo: {mail_file_address}")
-        print(f"📑 Hoja   : '{mail_sheet_name}'")
-        print("──────────────────────────────────────────────\n")
-
-        # Convertir a polars
-        df_local = pl.from_pandas(df_local)
-
-        return df_local, True, local_most_recent_date.strftime('%Y-%m-%d')
+    return df_updated, False, mail_most_recent_date.strftime('%Y-%m-%d')
