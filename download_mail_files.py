@@ -47,19 +47,19 @@ def download_mail_files(mails, MAIL_ITEM_CODE, project_address, transportista, r
             
             # Guardar archivo excel con alguno de los asuntos
             file_name = attachment.FileName
-            file_address = os.path.join(project_address, file_name)
-            attachment.SaveAsFile(file_address)
+            mail_file_address = os.path.join(project_address, file_name)
+            attachment.SaveAsFile(mail_file_address)
 
             # Validar contenido
             try:
-                df = pd.read_excel(file_address, sheet_name=sheet_name, header=None)
+                df = pd.read_excel(mail_file_address, sheet_name=sheet_name, header=None)
                 df = fix_misplaced_headers(df) # Corregir encabezado
                 df_clean = df.dropna(how='all') # Elminar todos los NaN
                 if df.empty or df_clean.shape[0] == 0: # Si no hay datos eliminar y saltar
-                    os.remove(file_address)
+                    os.remove(mail_file_address)
                     continue
             except Exception:
-                os.remove(file_address)
+                os.remove(mail_file_address)
                 continue
 
             # Guardar archivo para esa fecha
@@ -68,7 +68,7 @@ def download_mail_files(mails, MAIL_ITEM_CODE, project_address, transportista, r
 
             # Guardar tipo de archivo en esa fecha
             files_found[string_date_mail][type_file] = {
-                'file_address': file_address,
+                'mail_file_address': mail_file_address,
                 'received_time': string_date_mail
             }
 
@@ -77,6 +77,6 @@ def download_mail_files(mails, MAIL_ITEM_CODE, project_address, transportista, r
                 datos = files_found[string_date_mail]
                 
                 return (
-                    datos[transportista['name']]['file_address'], datos[transportista['name']]['received_time'],
-                    datos[ruta['name']]['file_address'], datos[ruta['name']]['received_time']
+                    datos[transportista['name']]['mail_file_address'], datos[transportista['name']]['received_time'],
+                    datos[ruta['name']]['mail_file_address'], datos[ruta['name']]['received_time']
                 )

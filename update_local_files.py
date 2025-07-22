@@ -138,7 +138,7 @@ def backup_local_file_changes(project_address, document, backup_address):
 
 # Escribir al CSV sobrescribiendo el original
 def save_local_file_changes(project_address, root_address, df_updated, document):
-    text = f'[✓] Guardado de Archivo ({document['local_file_name']}) correctamente'
+    text = f'[✓] Actualizacion de Archivo ({document['local_file_name']}) correctamente'
     log.write_log(project_address, text)
     
     df_updated_project = df_updated.write_csv(separator=",")
@@ -213,11 +213,10 @@ def update_local_file(document, locaciones, vendedores, transportistas_code):
     # Concatenar archivos de correo y local
     df_updated = concat_polar_dataframes(df_mail, df_local, date_column)
 
-    print("\nℹ️  No se encontraron datos nuevos para actualizar.")
-    print("╭──────────────────────────────────────────────╮")
-    print(f"│ 📄 Archivo       : {mail_file_address}")
+    print("╭────────────────────────────────────────────────────────╮")
+    print(f"│ 📄 Archivo       : {document['local_file_name']}")
     print(f"│ 📑 Local Date    : '{local_most_recent_date}'")
     print(f"│ 📑 Email Date    : '{mail_most_recent_date}'")
-    print("╰──────────────────────────────────────────────╯\n")
+    print("╰────────────────────────────────────────────────────────╯\n")
         
     return df_updated, False, mail_most_recent_date.strftime('%Y-%m-%d')
