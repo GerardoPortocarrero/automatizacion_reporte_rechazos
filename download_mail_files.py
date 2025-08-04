@@ -36,6 +36,7 @@ def download_mail_files(mails, MAIL_ITEM_CODE, project_address, transportista, r
             # Si el correo tiene asunto carga diaria o venta perdida
             type_file = None
             sheet_name = None
+
             if transportista['mail_subject'].lower() in subject_lower:
                 type_file = transportista['name']
                 sheet_name = transportista['mail_sheet_name']
@@ -51,6 +52,7 @@ def download_mail_files(mails, MAIL_ITEM_CODE, project_address, transportista, r
             attachment.SaveAsFile(mail_file_address)
 
             # Validar contenido
+            # Si algun archivo esta vacio o no es valido eliminarlo y continuar
             try:
                 df = pd.read_excel(mail_file_address, sheet_name=sheet_name, header=None)
                 df = fix_misplaced_headers(df) # Corregir encabezado
