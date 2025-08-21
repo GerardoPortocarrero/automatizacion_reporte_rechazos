@@ -70,6 +70,12 @@ def concat_polar_dataframes(df_mail, df_local, date_column):
     df_local = pl.from_pandas(df_local)
     df_mail = pl.from_pandas(df_mail)
 
+    # Forzar tipado: Mesa Comercial siempre String
+    if "Mesa Comercial" in df_local.columns:
+        df_local = df_local.with_columns(pl.col("Mesa Comercial").cast(pl.Utf8))
+    if "Mesa Comercial" in df_mail.columns:
+        df_mail = df_mail.with_columns(pl.col("Mesa Comercial").cast(pl.Utf8))
+
     # Forzar tipado de df_mail igual al de df_local (excepto fecha)
     try:
         schema_local = df_local.schema
@@ -95,7 +101,7 @@ def concat_polar_dataframes(df_mail, df_local, date_column):
     return df_updated
 
 # Actualizar archivo si tiene columna 'Mesa Comercial'
-def customized_ruta_mail_file(df, vendedores):
+def customized_ruta_mail_file(df, vendedores, MESA_1, MESA_2):
     if 'Mesa Comercial' in df.columns:
 
         df = df.drop(columns=['Mesa Comercial'])
@@ -109,6 +115,16 @@ def customized_ruta_mail_file(df, vendedores):
 
         df['Nombre Vendedor'] = df.apply(get_nombre_vendedor, axis=1)
 
+    def asignar_mesa(ruta):
+        if ruta in MESA_1:
+            return "Mesa 1"
+        elif ruta in MESA_2:
+            return "Mesa 2"
+        return "Sin Mesa"
+
+    if "Ruta Troncal Dinámico" in df.columns:
+        df["Mesa Comercial"] = df["Ruta Troncal Dinámico"].apply(asignar_mesa)
+        
     return df
 
 # Actualizar codigos de transportistas
@@ -172,7 +188,7 @@ def read_local_file(local_file_address):
     return df_local
 
 # Actualizar el archivo local con los datos del correo
-def update_local_file(document, locaciones, vendedores, transportistas_code):
+def update_local_file(document, locaciones, vendedores, transportistas_code, MESA_1, MESA_2):
     # Rutas de archivo
     mail_file_address = document['mail_file_address']
     mail_sheet_name = document['mail_sheet_name']
@@ -191,7 +207,7 @@ def update_local_file(document, locaciones, vendedores, transportistas_code):
     mail_most_recent_date, local_most_recent_date = get_most_recent_dates(document, df_mail, df_local)
 
     # Configuracion solo para el archivo de ruta
-    df_mail = customized_ruta_mail_file(df_mail, vendedores)
+    df_mail = customized_ruta_mail_file(df_mail, vendedores, MESA_1, MESA_2)
 
     # Actualizar el codigo de transportista para ambos archivos
     df_mail = set_transportista_code_mail_file(df_mail, document, transportistas_code)
